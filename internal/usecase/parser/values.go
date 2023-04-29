@@ -8,5 +8,5 @@ var (
 )
 
 const (
-	urlsDefaultSizse = 15
+	urlsDefaultSize = 15
 )

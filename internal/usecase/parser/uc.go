@@ -24,7 +24,7 @@ func (i *ioParser) Parse() ([]string, error) {
 	}()
 	scanner := bufio.NewScanner(i.reader)
 	scanner.Split(bufio.ScanLines)
-	urls := make([]string, 0, urlsDefaultSizse)
+	urls := make([]string, 0, urlsDefaultSize)
 	for scanner.Scan() {
 		if value := scanner.Text(); i.validator.ValidateLink(value) == nil {
 			urls = append(urls, value)
@@ -33,9 +33,10 @@ func (i *ioParser) Parse() ([]string, error) {
 	return urls, scanner.Err()
 }
 
-func NewIoParser(file io.ReadCloser, validator protocol.LinkValidator) *ioParser {
+func NewIoParser(file io.ReadCloser, validator protocol.LinkValidator, logger protocol.Logger) *ioParser {
 	return &ioParser{
 		validator: validator,
 		reader:    file,
+		logger:    logger,
 	}
 }
