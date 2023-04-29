@@ -11,7 +11,7 @@ import (
 
 func TestParse(t *testing.T) {
 	reader := bytes.NewReader(fakeContent)
-	p := NewIoParser(io.NopCloser(reader), mockValidator{})
+	p := NewIoParser(io.NopCloser(reader), mockValidator{}, nil)
 	links, err := p.Parse()
 	assert.Nil(t, err)
 	assert.Equal(t, len(links), 5)
