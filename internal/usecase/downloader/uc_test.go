@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func newFakeCocurrentDownloader() *concurrentDownloader {
+func newFakeConcurrentDownloader() *concurrentDownloader {
 	wdf := make(map[int]chan struct{})
 	wdf[0] = make(chan struct{})
 	wdf[1] = make(chan struct{})
@@ -26,7 +26,7 @@ func newFakeCocurrentDownloader() *concurrentDownloader {
 }
 
 func TestConcurrentDownloader(t *testing.T) {
-	cd := newFakeCocurrentDownloader()
+	cd := newFakeConcurrentDownloader()
 	urls := []string{"some-image.com", "bad-url", "another-image.com",
 		"some-image.com1", "bad-url", "another-image.com1",
 		"some-image.com2", "bad-url", "another-image.com2",
