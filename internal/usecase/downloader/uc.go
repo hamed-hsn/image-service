@@ -3,7 +3,6 @@ package downloader
 import (
 	"context"
 	"image_service/internal/protocol"
-	"io"
 	"time"
 )
 
@@ -62,17 +61,10 @@ func (cd *concurrentDownloader) download(url string) {
 	ctx := context.Background()
 	body, status, err := cd.fetcher.fetch(ctx, url)
 	if err != nil || status != 200 {
-		cd.errorC <- struct {
-			Url    string
-			Status int
-			Error  error
-		}{Url: url, Status: status, Error: err}
+		cd.errorC <- errorType{Url: url, Status: status, Error: err}
 		return
 	}
-	cd.outputC <- struct {
-		Body   io.ReadCloser
-		Status int
-	}{Body: body, Status: status}
+	cd.outputC <- outputType{Body: body, Status: status, Url: url}
 }
 
 func (cd *concurrentDownloader) Input() chan string {

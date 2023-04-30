@@ -28,4 +28,5 @@ type errorType struct {
 type outputType struct {
 	Body   io.ReadCloser
 	Status int
+	Url    string
 }
