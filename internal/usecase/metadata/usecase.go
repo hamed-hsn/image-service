@@ -5,6 +5,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"image_service/internal/dto"
 	"io"
+	"strings"
 	"sync"
 )
 
@@ -22,7 +23,7 @@ func (s *service) DetectFromBuffer(buff *bytes.Buffer) (dto.Metadata, error) {
 	detector := mimetype.Detect(body)
 	return dto.Metadata{
 		Mime: detector.String(),
-		Ext:  detector.Extension(),
+		Ext:  strings.ReplaceAll(detector.Extension(), ".", ""),
 	}, nil
 }
 

@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"bytes"
 	"image_service/internal/dto"
 )
 
@@ -13,4 +14,8 @@ type DownloaderUC interface {
 	Input() chan string
 	Output() chan dto.DownloaderOutput
 	Errors() chan dto.DownloaderError
+}
+
+type MetadataUC interface {
+	DetectFromBuffer(buff *bytes.Buffer) (dto.Metadata, error)
 }
