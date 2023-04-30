@@ -4,23 +4,39 @@ import (
 	"context"
 	"image_service/internal/protocol"
 	"io"
+	"time"
 )
 
+func NewDefaultDownloaderUC(workers int, logger protocol.Logger) *concurrentDownloader {
+	if workers < MinimumWorkersCount {
+		panic(invalidWorkersMsg)
+	}
+	workersDone := make(map[int]chan struct{})
+	for i := 0; i < workers; i++ {
+		workersDone[i] = make(chan struct{})
+	}
+	return &concurrentDownloader{
+		input:   make(chan string, DefaultInputChannelLen),
+		errorC:  make(chan errorType, DefaultInputChannelLen),
+		outputC: make(chan outputType, DefaultInputChannelLen),
+		//done unbuffered channel for sync and flag
+		done:            make(chan struct{}),
+		logger:          logger,
+		workers:         workers,
+		fetcher:         DefaultFetcher,
+		workersDoneFlag: workersDone,
+	}
+}
+
 type concurrentDownloader struct {
-	input  chan string
-	ErrorC chan struct {
-		Url    string
-		Status int
-		Error  error
-	}
-	Output chan struct {
-		Body   io.ReadCloser
-		Status int
-	}
-	done    chan struct{}
-	logger  protocol.Logger
-	workers int
-	fetcher fetcher
+	input           chan string
+	errorC          chan errorType
+	outputC         chan outputType
+	done            chan struct{}
+	workersDoneFlag map[int]chan struct{}
+	logger          protocol.Logger
+	workers         int
+	fetcher         fetcher
 }
 
 func (cd *concurrentDownloader) Start() error {
@@ -31,6 +47,9 @@ func (cd *concurrentDownloader) Start() error {
 				case url := <-cd.input:
 					cd.logger.Info("received new url to worker-id #", "worker-id", workerID)
 					go cd.download(url)
+				case <-cd.workersDoneFlag[workerID]:
+					cd.logger.Info("worker received done flag", "worker-id", workerID)
+					return
 				}
 			}
 		}(i)
@@ -43,15 +62,41 @@ func (cd *concurrentDownloader) download(url string) {
 	ctx := context.Background()
 	body, status, err := cd.fetcher.fetch(ctx, url)
 	if err != nil || status != 200 {
-		cd.ErrorC <- struct {
+		cd.errorC <- struct {
 			Url    string
 			Status int
 			Error  error
 		}{Url: url, Status: status, Error: err}
 		return
 	}
-	cd.Output <- struct {
+	cd.outputC <- struct {
 		Body   io.ReadCloser
 		Status int
 	}{Body: body, Status: status}
+}
+
+func (cd *concurrentDownloader) Input() chan string {
+	return cd.input
+}
+
+func (cd *concurrentDownloader) Output() chan outputType {
+	return cd.outputC
+}
+
+func (cd *concurrentDownloader) Errors() chan errorType {
+	return cd.errorC
+}
+
+func (cd *concurrentDownloader) StopGracefully() {
+	cd.logger.Info("stop gracefully start!")
+	for _, flagChannel := range cd.workersDoneFlag {
+		flagChannel <- struct{}{}
+	}
+	cd.done <- struct{}{}
+	go func() {
+		time.Sleep(time.Second * 5)
+		close(cd.input)
+		close(cd.outputC)
+		close(cd.errorC)
+	}()
 }
