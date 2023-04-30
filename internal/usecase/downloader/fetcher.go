@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 )
 
@@ -32,8 +33,21 @@ type simpleFetcher struct {
 }
 
 func (s simpleFetcher) fetch(ctx context.Context, url string) (io.ReadCloser, int, error) {
-	//TODO implement me
-	panic("implement me")
+	client := http.Client{}
+	if s.timeout.Seconds() > 3 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.timeout)
+		defer cancel()
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, 0, err
+	}
+	return resp.Body, resp.StatusCode, nil
 }
 
 var _ fetcher = simpleFetcher{}
