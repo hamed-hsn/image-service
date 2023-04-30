@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"fmt"
-	"io"
 	"time"
 )
 
@@ -18,15 +17,3 @@ const (
 	DefaultInputChannelLen = 10
 	MinimumWorkersCount    = 4
 )
-
-type errorType struct {
-	Url    string
-	Status int
-	Error  error
-}
-
-type outputType struct {
-	Body   io.ReadCloser
-	Status int
-	Url    string
-}

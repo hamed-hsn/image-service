@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"context"
+	"image_service/internal/dto"
 	"image_service/internal/protocol"
 	"time"
 )
@@ -16,8 +17,8 @@ func NewDefaultDownloaderUC(workers int, logger protocol.Logger) *concurrentDown
 	}
 	return &concurrentDownloader{
 		input:   make(chan string, DefaultInputChannelLen),
-		errorC:  make(chan errorType, DefaultInputChannelLen),
-		outputC: make(chan outputType, DefaultInputChannelLen),
+		errorC:  make(chan dto.DownloaderError, DefaultInputChannelLen),
+		outputC: make(chan dto.DownloaderOutput, DefaultInputChannelLen),
 		//done unbuffered channel for sync and flag
 		done:            make(chan struct{}),
 		logger:          logger,
@@ -29,8 +30,8 @@ func NewDefaultDownloaderUC(workers int, logger protocol.Logger) *concurrentDown
 
 type concurrentDownloader struct {
 	input           chan string
-	errorC          chan errorType
-	outputC         chan outputType
+	errorC          chan dto.DownloaderError
+	outputC         chan dto.DownloaderOutput
 	done            chan struct{}
 	workersDoneFlag map[int]chan struct{}
 	logger          protocol.Logger
@@ -61,21 +62,21 @@ func (cd *concurrentDownloader) download(url string) {
 	ctx := context.Background()
 	body, status, err := cd.fetcher.fetch(ctx, url)
 	if err != nil || status != 200 {
-		cd.errorC <- errorType{Url: url, Status: status, Error: err}
+		cd.errorC <- dto.DownloaderError{Url: url, Status: status, Error: err}
 		return
 	}
-	cd.outputC <- outputType{Body: body, Status: status, Url: url}
+	cd.outputC <- dto.DownloaderOutput{Body: body, Status: status, Url: url}
 }
 
 func (cd *concurrentDownloader) Input() chan string {
 	return cd.input
 }
 
-func (cd *concurrentDownloader) Output() chan outputType {
+func (cd *concurrentDownloader) Output() chan dto.DownloaderOutput {
 	return cd.outputC
 }
 
-func (cd *concurrentDownloader) Errors() chan errorType {
+func (cd *concurrentDownloader) Errors() chan dto.DownloaderError {
 	return cd.errorC
 }
 
