@@ -14,6 +14,7 @@ type DownloaderUC interface {
 	Input() chan string
 	Output() chan dto.DownloaderOutput
 	Errors() chan dto.DownloaderError
+	StopGracefully()
 }
 
 type MetadataUC interface {
