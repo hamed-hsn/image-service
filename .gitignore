@@ -22,3 +22,5 @@
 go.work
 /files/tests/
 /go.sum
+/images/
+/images/**
