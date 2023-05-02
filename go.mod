@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.2
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/stretchr/testify v1.8.2
 	go.mongodb.org/mongo-driver v1.11.4
 )
