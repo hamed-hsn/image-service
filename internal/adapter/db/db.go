@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"image_service/internal/protocol"
 	"time"
 )
 
@@ -23,11 +24,12 @@ func connect(ctx context.Context, uri, dbname, colname string) (*mongo.Client, *
 }
 
 type adapter struct {
-	pagination int
+	pagination int64
 	uri        string
 	colName    string
 	dbName     string
 	handler    *dbhandler
+	logger     protocol.Logger
 }
 
 func (a *adapter) check(ctx context.Context) {
@@ -36,6 +38,7 @@ func (a *adapter) check(ctx context.Context) {
 		select {
 		case <-tick.C:
 			if a.isResetRequire(ctx) {
+				a.logger.Warning("db connection issue")
 				a.tryConnect(ctx)
 			}
 		}
@@ -68,13 +71,14 @@ func (a *adapter) getCol() *mongo.Collection {
 	return a.handler.col
 }
 
-func NewMongoDbAdapter(option ...optFunc) *adapter {
+func NewMongoDbAdapter(logger protocol.Logger, option ...optFunc) *adapter {
 	a := adapter{
 		pagination: defaultPagination,
 		uri:        defaultURI,
 		colName:    defaultColName,
 		dbName:     defaultDbName,
 		handler:    &dbhandler{checkingDuration: defaultCheckingDuration},
+		logger:     logger,
 	}
 
 	for _, opt := range option {
@@ -94,7 +98,7 @@ func WithURI(uri string) optFunc {
 	}
 }
 
-func WithPagination(p int) optFunc {
+func WithPagination(p int64) optFunc {
 	return func(a *adapter) {
 		a.pagination = p
 	}
