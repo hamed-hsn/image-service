@@ -9,6 +9,7 @@ import (
 )
 
 func TestDetector(t *testing.T) {
+	// the following path  is set to gitignore !!
 	raw, err := os.Open("../../../files/tests/file.jpg")
 	assert.Nil(t, err)
 	d := New()
