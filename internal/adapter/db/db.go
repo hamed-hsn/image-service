@@ -59,8 +59,8 @@ func (a *adapter) isResetRequire(ctx context.Context) bool {
 
 func (a *adapter) tryConnect(ctx context.Context) {
 	client, col := connect(ctx, a.uri, a.dbName, a.colName)
-	*a.handler.client = *client
-	*a.handler.col = *col
+	a.handler.client = client
+	a.handler.col = col
 }
 
 func (a *adapter) getCol() *mongo.Collection {
@@ -95,6 +95,18 @@ type optFunc func(*adapter)
 func WithURI(uri string) optFunc {
 	return func(a *adapter) {
 		a.uri = uri
+	}
+}
+
+func WithDbName(name string) optFunc {
+	return func(a *adapter) {
+		a.dbName = name
+	}
+}
+
+func WithColName(name string) optFunc {
+	return func(a *adapter) {
+		a.colName = name
 	}
 }
 

@@ -10,6 +10,8 @@ var (
 		timeout: 15 * time.Second,
 	}
 
+	userAgent = "Mozilla/5.0 (platform; rv:geckoversion) Gecko/geckotrail Firefox/firefoxversion"
+
 	invalidWorkersMsg = fmt.Sprintf("the workers count must be greater than %d", MinimumWorkersCount)
 )
 

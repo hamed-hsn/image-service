@@ -32,7 +32,7 @@ type simpleFetcher struct {
 	timeout time.Duration
 }
 
-func (s simpleFetcher) fetch(ctx context.Context, url string) (io.ReadCloser, int, error) {
+func (s *simpleFetcher) fetch(ctx context.Context, url string) (io.ReadCloser, int, error) {
 	client := http.Client{}
 	if s.timeout.Seconds() > 3 {
 		var cancel context.CancelFunc
@@ -43,14 +43,17 @@ func (s simpleFetcher) fetch(ctx context.Context, url string) (io.ReadCloser, in
 	if err != nil {
 		return nil, 0, err
 	}
+	request.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, 0, err
 	}
-	return resp.Body, resp.StatusCode, nil
+	raw, err := io.ReadAll(resp.Body)
+	buf := bytes.NewBuffer(raw)
+	return io.NopCloser(buf), resp.StatusCode, err
 }
 
-var _ fetcher = simpleFetcher{}
+var _ fetcher = &simpleFetcher{}
 
 type proxyFetcher struct {
 	proxy struct {

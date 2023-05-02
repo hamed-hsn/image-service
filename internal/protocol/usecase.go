@@ -12,7 +12,7 @@ type ParserUC interface {
 type DownloaderUC interface {
 	Start() error
 	Input() chan string
-	Output() chan dto.DownloaderOutput
+	Output() chan *dto.DownloaderOutput
 	Errors() chan dto.DownloaderError
 	StopGracefully()
 }

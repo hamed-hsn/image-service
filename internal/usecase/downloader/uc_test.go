@@ -3,6 +3,7 @@ package downloader
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"image_service/internal/dto"
 	"image_service/internal/protocol"
 	"io"
 	"sync"
@@ -15,8 +16,8 @@ func newFakeConcurrentDownloader() *concurrentDownloader {
 	wdf[1] = make(chan struct{})
 	return &concurrentDownloader{
 		input:           make(chan string, 4),
-		outputC:         make(chan outputType, 4),
-		errorC:          make(chan errorType, 4),
+		outputC:         make(chan *dto.DownloaderOutput, 4),
+		errorC:          make(chan dto.DownloaderError, 4),
 		done:            make(chan struct{}),
 		fetcher:         &mockFetcher{},
 		workers:         4,

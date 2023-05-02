@@ -18,12 +18,12 @@ func NewDefaultDownloaderUC(workers int, logger protocol.Logger) *concurrentDown
 	return &concurrentDownloader{
 		input:   make(chan string, DefaultInputChannelLen),
 		errorC:  make(chan dto.DownloaderError, DefaultInputChannelLen),
-		outputC: make(chan dto.DownloaderOutput, DefaultInputChannelLen),
+		outputC: make(chan *dto.DownloaderOutput, DefaultInputChannelLen),
 		//done unbuffered channel for sync and flag
 		done:            make(chan struct{}),
 		logger:          logger,
 		workers:         workers,
-		fetcher:         DefaultFetcher,
+		fetcher:         &DefaultFetcher,
 		workersDoneFlag: workersDone,
 	}
 }
@@ -31,7 +31,7 @@ func NewDefaultDownloaderUC(workers int, logger protocol.Logger) *concurrentDown
 type concurrentDownloader struct {
 	input           chan string
 	errorC          chan dto.DownloaderError
-	outputC         chan dto.DownloaderOutput
+	outputC         chan *dto.DownloaderOutput
 	done            chan struct{}
 	workersDoneFlag map[int]chan struct{}
 	logger          protocol.Logger
@@ -45,7 +45,7 @@ func (cd *concurrentDownloader) Start() error {
 			for {
 				select {
 				case url := <-cd.input:
-					cd.logger.Info("received new url to worker-id #", "worker-id", workerID)
+					cd.logger.Info("received new url to worker-id #", "worker-id", workerID, "url", url)
 					go cd.download(url)
 				case <-cd.workersDoneFlag[workerID]:
 					cd.logger.Info("worker received done flag", "worker-id", workerID)
@@ -62,17 +62,18 @@ func (cd *concurrentDownloader) download(url string) {
 	ctx := context.Background()
 	body, status, err := cd.fetcher.fetch(ctx, url)
 	if err != nil || status != 200 {
+		cd.logger.Error("download error", "err", err, "status", status)
 		cd.errorC <- dto.DownloaderError{Url: url, Status: status, Error: err}
 		return
 	}
-	cd.outputC <- dto.DownloaderOutput{Body: body, Status: status, Url: url}
+	cd.outputC <- &dto.DownloaderOutput{Body: body, Status: status, Url: url}
 }
 
 func (cd *concurrentDownloader) Input() chan string {
 	return cd.input
 }
 
-func (cd *concurrentDownloader) Output() chan dto.DownloaderOutput {
+func (cd *concurrentDownloader) Output() chan *dto.DownloaderOutput {
 	return cd.outputC
 }
 

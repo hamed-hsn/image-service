@@ -25,7 +25,7 @@ func (a *adapter) Get(ctx context.Context, filter types.GetFilterDB) (*entity.In
 	bsonFilter := makeGetFilter(filter)
 	result := a.getCol().FindOne(ctx, bsonFilter)
 	if result.Err() != nil {
-		a.logger.Error("db-get error", "error", result.Err())
+		//a.logger.Error("db-get error", "error", result.Err())
 		return nil, result.Err()
 	}
 	var model infoModel

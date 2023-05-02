@@ -50,15 +50,16 @@ func (b *BackgroundCtrl) Feed(ctx context.Context) {
 	}
 }
 
-func (b *BackgroundCtrl) LinkProcess(out dto.DownloaderOutput) (*entity.Info, error) {
+func (b *BackgroundCtrl) LinkProcess(out *dto.DownloaderOutput) (*entity.Info, error) {
 	info := entity.Info{
 		Url:          out.Url,
 		DownloadedAt: uint64(time.Now().Unix()),
 		CommonKey:    key.GenerateKey(out.Url),
 	}
-
+	defer out.Body.Close()
 	raw, err := io.ReadAll(out.Body)
 	if err != nil {
+		b.logger.Error("can not read from buffer", "error", err)
 		return nil, err
 	}
 	info.Size = uint64(len(raw))
@@ -99,7 +100,7 @@ func (b *BackgroundCtrl) Process(ctx context.Context) {
 				}
 			}
 		case err := <-b.downloader.Errors():
-			b.logger.Error("downloader error", "error", err.Error, "url", err.Url)
+			b.logger.Error("bg error", "error", err.Error, "url", err.Url)
 		}
 	}
 }
@@ -108,8 +109,8 @@ func (b *BackgroundCtrl) Start() {
 	b.logger.Info("start background")
 	ctx := context.Background()
 	go b.downloader.Start()
-	go b.Process(ctx)
 	b.Feed(ctx)
+	go b.Process(ctx)
 	<-b.done
 	b.downloader.StopGracefully()
 	b.logger.Info("end of background")

@@ -14,8 +14,7 @@ type service struct {
 }
 
 func (s *service) DetectFromBuffer(buff *bytes.Buffer) (dto.Metadata, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+
 	body, err := io.ReadAll(buff)
 	if err != nil {
 		return dto.Metadata{}, err
