@@ -15,4 +15,5 @@ type FilterValidator interface {
 }
 
 type UploadValidator interface {
+	Validate(request dto.UploadRequest) error
 }

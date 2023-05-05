@@ -35,7 +35,11 @@ type GetImageRawResponse struct {
 }
 
 type UploadRequest struct {
+	File        io.ReadCloser
+	ContentType string
+	Size        int64
 }
 
 type UploadResponse struct {
+	Info *entity.Info `json:"info,omitempty"`
 }
