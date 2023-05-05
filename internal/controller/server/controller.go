@@ -1,10 +1,17 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"image_service/entity"
+	"image_service/internal/app"
 	"image_service/internal/dto"
 	"image_service/internal/protocol"
+	"image_service/pkg/key"
+	"io"
 	"os"
+	"time"
 )
 
 func New(db protocol.Db, meta protocol.MetadataUC, logger protocol.Logger) *Controller {
@@ -78,5 +85,49 @@ func (c *Controller) ShowImage(ctx context.Context, request dto.GetImageRequest)
 }
 
 func (c *Controller) UploadImage(ctx context.Context, request dto.UploadRequest) (dto.UploadResponse, error) {
-	panic("")
+	if err := c.uploadValidator.Validate(request); err != nil {
+		c.logger.Error("validate error", err)
+		return dto.UploadResponse{}, err
+	}
+	raw, err := io.ReadAll(request.File)
+	if err != nil {
+		c.logger.Error("io read error", err)
+		return dto.UploadResponse{}, err
+	}
+	buf := bytes.NewBuffer(raw)
+	r, err := c.meta.DetectFromBuffer(buf)
+	if err != nil {
+		c.logger.Error("meta error", err)
+		return dto.UploadResponse{}, err
+	}
+
+	info := entity.Info{
+		DownloadedAt: uint64(time.Now().Unix()),
+		CommonKey:    key.GenerateKey(""),
+		Mode:         entity.DownloadedByUserRequestMode,
+		Ext:          r.Ext,
+		MimeType:     r.Mime,
+		Size:         uint64(len(raw)),
+	}
+	path := fmt.Sprintf("%s/%s.%s", app.UploadedImagesDirPath, info.CommonKey, r.Ext)
+	info.LocalPath = path
+	if err = store(raw, path); err != nil {
+		c.logger.Error("store error", err)
+		return dto.UploadResponse{}, err
+	}
+
+	if err = c.db.Insert(ctx, &info); err != nil {
+		c.logger.Error("db error", err)
+		return dto.UploadResponse{}, err
+	}
+	return dto.UploadResponse{Info: &info}, nil
+}
+
+func store(raw []byte, path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(raw)
+	return err
 }
