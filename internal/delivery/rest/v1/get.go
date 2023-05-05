@@ -15,7 +15,6 @@ func GetInfoApi(ctrl *server.Controller) echo.HandlerFunc {
 		var request dto.GetImageRequest
 		request.Url = c.QueryParam("url")
 		request.CommonKey = c.QueryParam("common_key")
-		fmt.Println(request)
 		resp, err := ctrl.GetImageInfo(c.Request().Context(), request)
 		if err != nil {
 			//TODO only for development phase return error message

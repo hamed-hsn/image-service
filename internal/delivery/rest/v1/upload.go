@@ -18,7 +18,6 @@ func UploadImageApi(ctrl *server.Controller) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 		contentType := ff.Header.Get("Content-Type")
-		//return c.JSON(200, contentType)
 		resp, err := ctrl.UploadImage(c.Request().Context(), dto.UploadRequest{File: file, Size: ff.Size, ContentType: contentType})
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
