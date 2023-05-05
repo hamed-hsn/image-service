@@ -29,5 +29,5 @@ func main() {
 	ctrl := builder.Build()
 	e := rest.New(ctrl)
 	err := e.Start(app.HttpPort)
-	logger.Error("app crushed", "error", err)
+	logger.Error("app crashed", "error", err)
 }
