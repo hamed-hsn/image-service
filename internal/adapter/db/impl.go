@@ -14,7 +14,7 @@ func (a *adapter) List(ctx context.Context, filter types.ListFilterDB) ([]*entit
 		return nil, err
 	}
 	var models []infoModel
-	if err := result.Decode(models); err != nil {
+	if err := result.All(ctx, &models); err != nil {
 		a.logger.Error("list-db on decoding", "error", err)
 		return nil, err
 	}

@@ -8,4 +8,5 @@ const (
 	MongoDbDatabaseName   = "images"
 	MongoDbColName        = "info"
 	WorkersCount          = 6
+	HttpPort              = ":8080"
 )

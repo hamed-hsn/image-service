@@ -87,11 +87,11 @@ func (b *builder) check() error {
 	return nil
 }
 
-func (b *builder) Build() Controller {
+func (b *builder) Build() *Controller {
 	if err := b.check(); err != nil {
 		panic(err)
 	}
-	return Controller{
+	return &Controller{
 		db:              b.db,
 		meta:            b.meta,
 		uniqueValidator: b.uniqueValidator,
